@@ -1,4 +1,4 @@
-function I = decompress (compressedImg, method, k)
+function decompress (compressedImg, method, k)
   compressedImg = double (compressedImg);
   n = size (compressedImg);
   switch method
@@ -64,7 +64,6 @@ function I = decompress (compressedImg, method, k)
   endswitch
   I = uint8(I);
   imwrite(I, "decompressed.png");
-  return
 endfunction
 
 function d = dfdx (I, x, y, cor)
