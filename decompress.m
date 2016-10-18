@@ -36,31 +36,36 @@ function decompress (compressedImg, method, k)
         endfor
       endfor
     case 2
-      B = [1,0,0,0;0,0,1,0;-3,3,-1,-1;2,-2,1,1];
-      for cor = 1:3 
-        for i = 1:n(1)
-          for j = 1:n(2)
-            if (i == n(1) && j == n(2))
-              I(1+(i-1)*(k+1),1+(j-1)*(k+1),cor) = compressedImg(i,j,cor);
-            elseif (i == n(1))
-              
-            elseif (j == n(2))
-
-            else
-              M = [compressedImg(i,j,cor), compressedImg(i,j+1,cor), dfdy(compressedImg, i, j, cor), dfdy(compressedImg, i, j+1, cor);
-                   compressedImg(i+1,j,cor), compressedImg(i+1,j+1,cor), dfdy(compressedImg, i+1, j, cor), dfdy(compressedImg, i+1, j+1, cor);
-                   dfdx(compressedImg,i,j,cor), dfdx(compressedImg,i,j+1,cor), d2fdxdy(compressedImg, i, j, cor), d2fdxdy(compressedImg, i, j+1, cor);
-                   dfdx(compressedImg,i+1,j,cor), dfdx(compressedImg,i+1,j+1,cor), d2fdxdy(compressedImg, i+1, j, cor), d2fdxdy(compressedImg, i+1, j+1, cor)];
-              v = @(x,y) [1,x,x^2,x^3]*B*M*transpose(B)*[1;y;y^2;y^3];
-              for x = 1:k+1
-                for y = 1:k+1
-                  I((i-1)*(k+1)+x,(j-1)*(k+1)+y,cor) = v((x-1)/k,(y-1)/k);
-                endfor
+    B = [1,0,0,0;0,0,1,0;-3,3,-1,-1;2,-2,1,1];
+    for cor = 1:3 
+      for i = 1:n(1)-1
+        for j = 1:n(2)-1
+            M = [compressedImg(i,j,cor), compressedImg(i,j+1,cor), dfdy(compressedImg, i, j, cor), dfdy(compressedImg, i, j+1, cor);
+                 compressedImg(i+1,j,cor), compressedImg(i+1,j+1,cor), dfdy(compressedImg, i+1, j, cor), dfdy(compressedImg, i+1, j+1, cor);
+                 dfdx(compressedImg,i,j,cor), dfdx(compressedImg,i,j+1,cor), d2fdxdy(compressedImg, i, j, cor), d2fdxdy(compressedImg, i, j+1, cor);
+                 dfdx(compressedImg,i+1,j,cor), dfdx(compressedImg,i+1,j+1,cor), d2fdxdy(compressedImg, i+1, j, cor), d2fdxdy(compressedImg, i+1, j+1, cor)];
+            v = @(x,y) [1,x,x^2,x^3]*B*M*transpose(B)*[1;y;y^2;y^3];
+            for x = 1:k+1
+              for y = 1:k+1
+                I((i-1)*(k+1)+x,(j-1)*(k+1)+y,cor) = v((x-1)/k,(y-1)/k);
               endfor
+            endfor
+            if (i == n(1)-1)
+            x = k+2;
+            for y = 1:k+1
+              I((i-1)*(k+1)+x,(j-1)*(k+1)+y,cor) = v((x-1)/k,(y-1)/k);
+            endfor
             endif
-          endfor
+            if (j == n(2)-1)
+            y = k+2;
+            for x = 1:k+1
+              I((i-1)*(k+1)+x,(j-1)*(k+1)+y,cor) = v((x-1)/k,(y-1)/k);
+            endfor
+          endif
         endfor
       endfor
+      I(1+(n(1)-1)*(k+1),1+(n(2)-1)*(k+1),cor) = compressedImg(n(1),n(2),cor);
+    endfor
   endswitch
   I = uint8(I);
   imwrite(I, "decompressed.png");
