@@ -1,5 +1,5 @@
-function decompress (compressedImg, method, k)
-compressedImg = double (compressedImg);
+function I = decompress (compressedImg, method, k)
+  compressedImg = double (compressedImg);
   n = size (compressedImg);
   switch method
     case 1
@@ -23,12 +23,12 @@ compressedImg = double (compressedImg);
                 I((i-1)*(k+1)+x,(j-1)*k+j,cor) = f(i+x/k);
               endfor
             else
-              A = double([1,i,j,i*j;1,i,j+1,i*(j+1);1,i+1,j,(i+1)*j;1,i+1,j+1,(i+1)*(j+1)]);
-              B = double([compressedImg(i,j,cor);compressedImg(i,j+1,cor);compressedImg(i+1,j,cor);compressedImg(i+1,j+1,cor)]);
-              f = @(x,y) double (dot (A\B, [1,x,y,x*y]));
+              A = [1,i,j,i*j;1,i,j+1,i*(j+1);1,i+1,j,(i+1)*j;1,i+1,j+1,(i+1)*(j+1)];
+              B = [compressedImg(i,j,cor);compressedImg(i,j+1,cor);compressedImg(i+1,j,cor);compressedImg(i+1,j+1,cor)];
+              f = @(x,y) dot (A\B, [1,x,y,x*y]);
               for x = 1:k+1
                 for y = 1:k+1
-                  I((i-1)*(k+1)+x,(j-1)*(k+1)+y,cor) = f(i+x/k,j+y/k);
+                  I((i-1)*(k+1)+x,(j-1)*(k+1)+y,cor) = f(i+(x-1)/k,j+(y-1)/k);
                 endfor
               endfor
             endif
@@ -51,10 +51,10 @@ compressedImg = double (compressedImg);
                    compressedImg(i+1,j,cor), compressedImg(i+1,j+1,cor), dfdy(compressedImg, i+1, j, cor), dfdy(compressedImg, i+1, j+1, cor);
                    dfdx(compressedImg,i,j,cor), dfdx(compressedImg,i,j+1,cor), d2fdxdy(compressedImg, i, j, cor), d2fdxdy(compressedImg, i, j+1, cor);
                    dfdx(compressedImg,i+1,j,cor), dfdx(compressedImg,i+1,j+1,cor), d2fdxdy(compressedImg, i+1, j, cor), d2fdxdy(compressedImg, i+1, j+1, cor)];
-              v = @(x,y)double([1,x,x^2,x^3]*B*M*transpose(B)*[1;y;y^2;y^3]);
+              v = @(x,y) [1,x,x^2,x^3]*B*M*transpose(B)*[1;y;y^2;y^3];
               for x = 1:k+1
                 for y = 1:k+1
-                  I((i)*(k+1)+x,(j)*(k+1)+y,cor) = v(i+x/k,j+y/k);
+                  I((i-1)*(k+1)+x,(j-1)*(k+1)+y,cor) = v((x-1)/k,(y-1)/k);
                 endfor
               endfor
             endif
@@ -64,6 +64,7 @@ compressedImg = double (compressedImg);
   endswitch
   I = uint8(I);
   imwrite(I, "decompressed.png");
+  return
 endfunction
 
 function d = dfdx (I, x, y, cor)
