@@ -1,5 +1,5 @@
-function decompress (compressedImg, method, k)
-  compressedImg = double (compressedImg);
+function decompress (ImgName, method, k)
+  compressedImg = double (imread (ImgName));
   n = size (compressedImg);
   switch method
     case 1
