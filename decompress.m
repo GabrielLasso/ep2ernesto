@@ -37,10 +37,10 @@ function decompressedImg = bicubicMethod(compressedImg, k, h)
   for c = 1:3
     for i = 1:nlin-1
       for j = 1:ncol-1
-        f = [compressedImg(i,j,c),compressedImg(i,j+1,c),dfdy(compressedImg,i,j,c),dfdy(compressedImg,i,j+1,c);
-            compressedImg(i+1,j,c),compressedImg(i+1,j+1,c),dfdy(compressedImg,i+1,j,c),dfdy(compressedImg,i+1,j+1,c);
-            dfdx(compressedImg,i,j,c),dfdx(compressedImg,i,j+1,c),d2fdxdy(compressedImg,i,j,c),d2fdxdy(compressedImg,i,j+1,c);
-            dfdx(compressedImg,i+1,j,c),dfdx(compressedImg,i+1,j+1,c),d2fdxdy(compressedImg,i+1,j,c),d2fdxdy(compressedImg,i+1,j+1,c)];
+        f = [compressedImg(i,j,c),compressedImg(i,j+1,c),dfdy(compressedImg,i,j,c,h),dfdy(compressedImg,i,j+1,c,h);
+            compressedImg(i+1,j,c),compressedImg(i+1,j+1,c),dfdy(compressedImg,i+1,j,c,h),dfdy(compressedImg,i+1,j+1,c,h);
+            dfdx(compressedImg,i,j,c,h),dfdx(compressedImg,i,j+1,c,h),d2fdxdy(compressedImg,i,j,c,h),d2fdxdy(compressedImg,i,j+1,c,h);
+            dfdx(compressedImg,i+1,j,c,h),dfdx(compressedImg,i+1,j+1,c,h),d2fdxdy(compressedImg,i+1,j,c,h),d2fdxdy(compressedImg,i+1,j+1,c,h)];
         p = @(x,y) [1,(x-i*h),(x-i*h)^2,(x-i*h)^3]*B*f*transpose(B)*[1;(y-j*h);(y-j*h)^2;(y-j*h)^3];
         for x = 1:k+2
           for y = 1:k+2
@@ -53,7 +53,7 @@ function decompressedImg = bicubicMethod(compressedImg, k, h)
   return
 endfunction
 
-function der = dfdx(f, x, y, color)
+function der = dfdx(f, x, y, color, h)
   n = size(f)(1);
   if (x == 1)
     der = (-3*f(x,y,color) + 4*f(x+1,y,color) - f(x+2,y,color))/(2*h);
@@ -65,7 +65,7 @@ function der = dfdx(f, x, y, color)
   return
 endfunction
 
-function der = dfdy(f, x, y, color)
+function der = dfdy(f, x, y, color, h)
   n = size(f)(2);
   if (y == 1)
     der = (-3*f(x,y,color) + 4*f(x,y+1,color) - f(x,y+2,color))/(2*h);
@@ -77,14 +77,14 @@ function der = dfdy(f, x, y, color)
   return
 endfunction
 
-function der = d2fdxdy(f, x, y, color)
+function der = d2fdxdy(f, x, y, color, h)
   n = size(f)(1);
   if (x == 1)
-    der = (-3*dfdy(f,x,y,color) + 4*dfdy(f,x+1,y,color) - dfdy(f,x+2,y,color))/(2*h);
+    der = (-3*dfdy(f,x,y,color,h) + 4*dfdy(f,x+1,y,color,h) - dfdy(f,x+2,y,color,h))/(2*h);
   elseif (x == n)
-    der = (-3*dfdy(f,x,y,color) + 4*dfdy(f,x-1,y,color) - dfdy(f,x-2,y,color))/(2*h);
+    der = (-3*dfdy(f,x,y,color,h) + 4*dfdy(f,x-1,y,color,h) - dfdy(f,x-2,y,color,h))/(2*h);
   else
-    der = (dfdy(f,x+1,y,color) - dfdy(f,x-1,y,color))/(2*h);
+    der = (dfdy(f,x+1,y,color,h) - dfdy(f,x-1,y,color,h))/(2*h);
   endif
   return
 endfunction
