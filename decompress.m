@@ -11,14 +11,14 @@ function decompress(compressedImg, method, k, h)
 endfunction
 
 function decompressedImg = bilinearMethod(compressedImg, k, h)
-  nlin = size(originalImg)(1);
-  ncol = size(originalImg)(2);
-  H = [1,0,0,0;1,0,h,0;1,h,0,0;1,h,h,h^2]
+  nlin = size(compressedImg)(1);
+  ncol = size(compressedImg)(2);
+  H = [1,0,0,0;1,0,h,0;1,h,0,0;1,h,h,h^2];
   for c = 1:3
     for i = 1:nlin-1
       for j = 1:ncol-1
         f = [compressedImg(i,j,c);compressedImg(i,j+1,c);compressedImg(i+1,j,c);compressedImg(i+1,j+1,c)];
-        p = @(x,y) dot(H\f, [1,x-i*h,y-j*h,(x-i*h)*(y-j*h)];
+        p = @(x,y) dot(H\f, [1,x-i*h,y-j*h,(x-i*h)*(y-j*h)]);
         for x = 1:k+2
           for y = 1:k+2
             decompressedImg((i-1)*(k+1)+x,(j-1)*(k+1)+y,c) = p(i*h+(x-1)*h/(k+1), j*h+(y-1)*h/(k+1));
@@ -31,8 +31,8 @@ function decompressedImg = bilinearMethod(compressedImg, k, h)
 endfunction
 
 function decompressedImg = bicubicMethod(compressedImg, k, h)
-  nlin = size(originalImg)(1);
-  ncol = size(originalImg)(2);
+  nlin = size(compressedImg)(1);
+  ncol = size(compressedImg)(2);
   B = [1,0,0,0;0,0,1,0;-3/h^2,3/h^2,-2/h,-1/h;2/h^3,-2/h^3,1/h^2,1/h^2];
   for c = 1:3
     for i = 1:nlin-1

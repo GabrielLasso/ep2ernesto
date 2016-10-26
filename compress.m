@@ -9,5 +9,3 @@ function compress(originalImg, k)
   endfor
   imwrite(compressedImg, "compressed.png");
 endfunction
-
-# 1 ou 0 mod k+1 ???
