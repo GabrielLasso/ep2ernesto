@@ -1,108 +1,92 @@
-function decompress (compressedImg, method, k)
-  compressedImg = double (imread (compressedImg));
-  n = size (compressedImg);
+function decompress(compressedImg, method, k, h)
+  compressedImg = double(imread(compressedImg));
   switch method
     case 1
-      for cor = 1:3 
-        for i = 1:n(1)
-          for j = 1:n(2)
-            if (i == n(1) && j == n(2))
-              I(1+(i-1)*(k+1),1+(j-1)*(k+1),cor) = compressedImg(i,j,cor);
-            elseif (i == n(1))
-              A = double ([1,j;1,j+1]);
-              B = double ([compressedImg(i,j,cor);compressedImg(i,j+1,cor)]);
-              f = @(x) double (dot (A\B, [1,x]));
-              for x = 1:k+1
-                I((i-1)*k+i,(j-1)*(k+1)+x,cor) = f(j+x/k);
-              endfor
-            elseif (j == n(2))
-              A = double ([1,i;1,i+1]);
-              B = double ([compressedImg(i,j,cor);compressedImg(i+1,j,cor)]);
-              f = @(x) double (dot (A\B, [1,x]));
-              for x = 1:k+1
-                I((i-1)*(k+1)+x,(j-1)*k+j,cor) = f(i+x/k);
-              endfor
-            else
-              A = [1,i,j,i*j;1,i,j+1,i*(j+1);1,i+1,j,(i+1)*j;1,i+1,j+1,(i+1)*(j+1)];
-              B = [compressedImg(i,j,cor);compressedImg(i,j+1,cor);compressedImg(i+1,j,cor);compressedImg(i+1,j+1,cor)];
-              f = @(x,y) dot (A\B, [1,x,y,x*y]);
-              for x = 1:k+1
-                for y = 1:k+1
-                  I((i-1)*(k+1)+x,(j-1)*(k+1)+y,cor) = f(i+(x-1)/k,j+(y-1)/k);
-                endfor
-              endfor
-            endif
+      decompressedImg = bilinearMethod(compressedImg, k, h);
+    case 2
+      decompressedImg = bicubicMethod(compressedImg, k, h);
+  endswitch
+  decompressedImg = uint8(decompressedImg);
+  imwrite(decompressedImg, "decompressed.png");
+endfunction
+
+function decompressedImg = bilinearMethod(compressedImg, k, h)
+  nlin = size(originalImg)(1);
+  ncol = size(originalImg)(2);
+  H = [1,0,0,0;1,0,h,0;1,h,0,0;1,h,h,h^2]
+  for c = 1:3
+    for i = 1:nlin-1
+      for j = 1:ncol-1
+        f = [compressedImg(i,j,c);compressedImg(i,j+1,c);compressedImg(i+1,j,c);compressedImg(i+1,j+1,c)];
+        p = @(x,y) dot(H\f, [1,x-i*h,y-j*h,(x-i*h)*(y-j*h)];
+        for x = 1:k+2
+          for y = 1:k+2
+            decompressedImg((i-1)*(k+1)+x,(j-1)*(k+1)+y,c) = p(i*h+(x-1)*h/(k+1), j*h+(y-1)*h/(k+1));
           endfor
         endfor
       endfor
-    case 2
-    B = [1,0,0,0;0,0,1,0;-3,3,-1,-1;2,-2,1,1];
-    for cor = 1:3 
-      for i = 1:n(1)-1
-        for j = 1:n(2)-1
-            M = [compressedImg(i,j,cor), compressedImg(i,j+1,cor), dfdy(compressedImg, i, j, cor), dfdy(compressedImg, i, j+1, cor);
-                 compressedImg(i+1,j,cor), compressedImg(i+1,j+1,cor), dfdy(compressedImg, i+1, j, cor), dfdy(compressedImg, i+1, j+1, cor);
-                 dfdx(compressedImg,i,j,cor), dfdx(compressedImg,i,j+1,cor), d2fdxdy(compressedImg, i, j, cor), d2fdxdy(compressedImg, i, j+1, cor);
-                 dfdx(compressedImg,i+1,j,cor), dfdx(compressedImg,i+1,j+1,cor), d2fdxdy(compressedImg, i+1, j, cor), d2fdxdy(compressedImg, i+1, j+1, cor)];
-            v = @(x,y) [1,x,x^2,x^3]*B*M*transpose(B)*[1;y;y^2;y^3];
-            for x = 1:k+1
-              for y = 1:k+1
-                I((i-1)*(k+1)+x,(j-1)*(k+1)+y,cor) = v((x-1)/k,(y-1)/k);
-              endfor
-            endfor
-            if (i == n(1)-1)
-            x = k+2;
-            for y = 1:k+1
-              I((i-1)*(k+1)+x,(j-1)*(k+1)+y,cor) = v((x-1)/k,(y-1)/k);
-            endfor
-            endif
-            if (j == n(2)-1)
-            y = k+2;
-            for x = 1:k+1
-              I((i-1)*(k+1)+x,(j-1)*(k+1)+y,cor) = v((x-1)/k,(y-1)/k);
-            endfor
-          endif
+    endfor
+  endfor
+  return
+endfunction
+
+function decompressedImg = bicubicMethod(compressedImg, k, h)
+  nlin = size(originalImg)(1);
+  ncol = size(originalImg)(2);
+  B = [1,0,0,0;0,0,1,0;-3/h^2,3/h^2,-2/h,-1/h;2/h^3,-2/h^3,1/h^2,1/h^2];
+  for c = 1:3
+    for i = 1:nlin-1
+      for j = 1:ncol-1
+        f = [compressedImg(i,j,c),compressedImg(i,j+1,c),dfdy(compressedImg,i,j,c),dfdy(compressedImg,i,j+1,c);
+            compressedImg(i+1,j,c),compressedImg(i+1,j+1,c),dfdy(compressedImg,i+1,j,c),dfdy(compressedImg,i+1,j+1,c);
+            dfdx(compressedImg,i,j,c),dfdx(compressedImg,i,j+1,c),d2fdxdy(compressedImg,i,j,c),d2fdxdy(compressedImg,i,j+1,c);
+            dfdx(compressedImg,i+1,j,c),dfdx(compressedImg,i+1,j+1,c),d2fdxdy(compressedImg,i+1,j,c),d2fdxdy(compressedImg,i+1,j+1,c)];
+        p = @(x,y) [1,(x-i*h),(x-i*h)^2,(x-i*h)^3]*B*f*transpose(B)*[1;(y-j*h);(y-j*h)^2;(y-j*h)^3];
+        for x = 1:k+2
+          for y = 1:k+2
+            decompressedImg((i-1)*(k+1)+x,(j-1)*(k+1)+y,c) = p(i*h+(x-1)*h/(k+1), j*h+(y-1)*h/(k+1));
+          endfor
         endfor
       endfor
-      I(1+(n(1)-1)*(k+1),1+(n(2)-1)*(k+1),cor) = compressedImg(n(1),n(2),cor);
     endfor
-  endswitch
-  I = uint8(I);
-  imwrite(I, "decompressed.png");
+  endfor
+  return
 endfunction
 
-function d = dfdx (I, x, y, cor)
-  n = size(I)(1);
+function der = dfdx(f, x, y, color)
+  n = size(f)(1);
   if (x == 1)
-    d = I(2,y,cor) - I(1,y,cor);
+    der = (-3*f(x,y,color) + 4*f(x+1,y,color) - f(x+2,y,color))/(2*h);
   elseif (x == n)
-    d = I(n,y,cor) - I(n-1,y,cor);
+    der = (-3*f(x,y,color) + 4*f(x-1,y,color) - f(x-2,y,color))/(2*h);
   else
-    d = (I(x+1,y,cor) - I(x-1,y,cor))/2;
+    der = (f(x+1,y,color) - f(x-1,y,color))/(2*h);
   endif
   return
 endfunction
 
-function d = dfdy (I, x, y, cor)
-  n = size(I)(2);
+function der = dfdy(f, x, y, color)
+  n = size(f)(2);
   if (y == 1)
-    d = I(x,2,cor) - I(x,1,cor);
+    der = (-3*f(x,y,color) + 4*f(x,y+1,color) - f(x,y+2,color))/(2*h);
   elseif (y == n)
-    d = I(x,n,cor) - I(x,n-1,cor);
+    der = (-3*f(x,y,color) + 4*f(x,y-1,color) - f(x,y-2,color))/(2*h);
   else
-    d = (I(x,y+1,cor) - I(x,y-1,cor))/2;
+    der = (f(x,y+1,color) - f(x,y-1,color))/(2*h);
   endif
   return
 endfunction
 
-function d = d2fdxdy (I, x, y, cor)
-  n = size(I)(1);
+function der = d2fdxdy(f, x, y, color)
+  n = size(f)(1);
   if (x == 1)
-    d = dfdy (I, 2, y, cor) - dfdy (I, 1, y, cor);
+    der = (-3*dfdy(f,x,y,color) + 4*dfdy(f,x+1,y,color) - dfdy(f,x+2,y,color))/(2*h);
   elseif (x == n)
-    d = dfdy (I, n, y, cor) - dfdy (I, n-1, y, cor);
+    der = (-3*dfdy(f,x,y,color) + 4*dfdy(f,x-1,y,color) - dfdy(f,x-2,y,color))/(2*h);
   else
-    d = (dfdy (I, x+1, y, cor) - dfdy (I, x-1, y, cor))/2;
+    der = (dfdy(f,x+1,y,color) - dfdy(f,x-1,y,color))/(2*h);
   endif
   return
 endfunction
+
+# verificar derivadas! linear para d2fdxdy e quadratica p/ primeira derivada
