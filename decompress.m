@@ -88,5 +88,3 @@ function der = d2fdxdy(f, x, y, color, h)
   endif
   return
 endfunction
-
-# verificar derivadas! linear para d2fdxdy e quadratica p/ primeira derivada
