@@ -13,8 +13,12 @@ endfunction
 function decompressedImg = bilinearMethod(compressedImg, k, h)
   nlin = size(compressedImg)(1);
   ncol = size(compressedImg)(2);
+  ncolors = 1;
+  if (ndims(compressedImg) >= 3)
+    ncolors = size(compressedImg)(3);
+  endif
   H = [1,0,0,0;1,0,h,0;1,h,0,0;1,h,h,h^2];
-  for c = 1:3
+  for c = 1:ncolors
     for i = 1:nlin-1
       for j = 1:ncol-1
         f = [compressedImg(i,j,c);compressedImg(i,j+1,c);compressedImg(i+1,j,c);compressedImg(i+1,j+1,c)];
@@ -33,8 +37,12 @@ endfunction
 function decompressedImg = bicubicMethod(compressedImg, k, h)
   nlin = size(compressedImg)(1);
   ncol = size(compressedImg)(2);
+  ncolors = 1;
+  if (ndims(compressedImg) >= 3)
+    ncolors = size(compressedImg)(3);
+  endif
   B = [1,0,0,0;0,0,1,0;-3/h^2,3/h^2,-2/h,-1/h;2/h^3,-2/h^3,1/h^2,1/h^2];
-  for c = 1:3
+  for c = 1:ncolors
     for i = 1:nlin-1
       for j = 1:ncol-1
         f = [compressedImg(i,j,c),compressedImg(i,j+1,c),dfdy(compressedImg,i,j,c,h),dfdy(compressedImg,i,j+1,c,h);
