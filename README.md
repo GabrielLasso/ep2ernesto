@@ -1,4 +1,4 @@
-# Trabalho da diciplina MAC0210 - Laboratório de Métodos Numéricos
+## Trabalho da diciplina MAC0210 - Laboratório de Métodos Numéricos
 
 S1 = imread("bilinear.png");  
 S2 = imread("bicubica.png");  
